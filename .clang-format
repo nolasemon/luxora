@@ -1,0 +1,49 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 4
+TabWidth: 4
+UseTab: Always
+AlignAfterOpenBracket: Align
+
+AlwaysBreakTemplateDeclarations: true
+
+BraceWrapping:
+  AfterControlStatement: true
+  AfterFunction: true
+  AfterClass: true
+  AfterEnum: true
+  AfterNamespace: true
+  AfterStruct: true
+  
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+# Formatting for functions and control flow
+AllowShortFunctionsOnASingleLine: Empty      # Disallow single-line functions unless empty
+# BreakBeforeBraces: Allman                    # Place opening braces on a new line (Allman style)
+# BreakAfterReturnType: Always                 # Always break after return type
+SpaceBeforeParens: ControlStatements         # Add a space before parentheses for control statements (if, while, etc.)
+# SpaceAfterControlStatement: true             # Add a space after control statement (if, while, etc.)
+
+# Wrapping settings
+ColumnLimit: 120                             # Limit each line to 120 characters (adjust to your preference)
+AlignConsecutiveAssignments: true            # Align assignments across lines
+AlignConsecutiveDeclarations: true           # Align variable declarations across lines
+
+# Misc settings
+SortIncludes: true                           # Automatically sort include statements
+Cpp11BracedListStyle: true                   # Enable C++11 style for initializer lists (e.g., {1, 2, 3})
+DerivePointerAlignment: true                 # Ensure pointer alignment is consistent
+KeepEmptyLinesAtTheStartOfBlocks: false      # Don't keep empty lines at the start of blocks
+SortUsingDeclarations: true                  # Sort using declarations (alphabetically)
+
+# Comment formatting settings
+CommentPragmas: '^IWYU'                      # Automatically format comments starting with 'IWYU'
+MaxEmptyLinesToKeep: 1                       # Limit the number of empty lines in code
+
+# Customizing formatting for specific constructs
+PointerAlignment: Left                       # Align pointer asterisks on the left (e.g., `int* ptr`)
+
+AllowAllParametersOfDeclarationOnNextLine: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
