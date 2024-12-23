@@ -31,3 +31,11 @@ TEST(TestSeries, TypedConversion) {
 	ASSERT_EQ(series.mean(), 35);
 	ASSERT_EQ(series.median(), 20);
 }
+
+TEST(TestSeries, WithNA) {
+	Series<int> series({18, 30, 92, {}, 20});
+
+	ASSERT_EQ(series.count(), 4);
+	ASSERT_EQ(series.mean(), 40);
+	ASSERT_EQ(series.median(), 25);
+}
