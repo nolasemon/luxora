@@ -15,6 +15,8 @@ class Series : public std::vector<std::optional<T>> {
 	T	   mean();
 	T	   median();
 	size_t count();
+
+	void fill_na(const T& fill);
 };
 
 class SeriesUntyped {
@@ -71,6 +73,15 @@ size_t Series<T>::count() {
 		len += x.has_value();
 	}
 	return len;
+}
+
+template <typename T>
+void Series<T>::fill_na(const T& fill) {
+	for (std::optional<T>& x : *this) {
+		if (!x.has_value()) {
+			x = fill;
+		}
+	}
 }
 
 template <typename T>
