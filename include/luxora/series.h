@@ -27,11 +27,15 @@ class SeriesUntyped {
 	SeriesUntyped(std::string);
 	template <typename T>
 	SeriesUntyped(std::string, const std::vector<T>&);
+	template <typename T>
+	SeriesUntyped(std::string, const Series<T>&);
 
 	std::string get_name();
 
 	template <typename T>
 	Series<T> typed();
+
+	friend bool operator==(const SeriesUntyped&, const SeriesUntyped&);
 };
 
 template <typename T>
@@ -75,6 +79,15 @@ SeriesUntyped::SeriesUntyped(std::string name, const std::vector<T>& vec)
 	for (size_t i = 0; i < vec.size(); ++i) {
 		std::optional<T> value = std::optional(vec[i]);
 		const std::byte* start = reinterpret_cast<const std::byte*>(&value);
+		std::copy(start, start + block_size, data.begin() + i * block_size);
+	}
+}
+
+template <typename T>
+SeriesUntyped::SeriesUntyped(std::string name, const Series<T>& series)
+	: name(name), block_size(sizeof(std::optional<T>)), data(sizeof(std::optional<T>) * series.size()) {
+	for (size_t i = 0; i < series.size(); ++i) {
+		const std::byte* start = reinterpret_cast<const std::byte*>(&series[i]);
 		std::copy(start, start + block_size, data.begin() + i * block_size);
 	}
 }
