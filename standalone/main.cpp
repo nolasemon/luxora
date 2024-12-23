@@ -6,5 +6,4 @@
 
 int main(int, char **) {
 	std::cout << "Hello, from luxora!" << std::endl;
-	std::cout << Luxora::X << " by the way!" << std::endl;
 }

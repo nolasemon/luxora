@@ -1,5 +1,4 @@
-namespace Luxora {
+#pragma once
 
-const int X = 42;
-
-}
+#include "dataframe.h"
+#include "series.h"

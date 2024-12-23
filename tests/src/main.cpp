@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
 #include <luxora/luxora.h>
 
-TEST(CLI11Test, BasicParsing) {
-	EXPECT_EQ(Luxora::X, 42);
-}
+#include "series_test.cpp"
+
+using namespace Luxora;
 
 // Additional tests...
 

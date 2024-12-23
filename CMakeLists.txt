@@ -1,25 +1,25 @@
 cmake_minimum_required(VERSION 3.10)
 project(Luxora VERSION 0.1.0 LANGUAGES CXX)
 
-include_directories(include)
+set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+set(CMAKE_CXX_EXTENSIONS off)
+set(CMAKE_CXX_STANDARD 23)
+set(CXX_STANDARD_REQUIRED on)
+
+file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_subdirectory(external/rapidcsv)
 
-add_library(luxora-lib src/lib.cpp)
+add_library(luxora-lib standalone/lib.cpp ${SRC_FILES} src/series.cpp)
 target_include_directories(luxora-lib
     PUBLIC
     ${CMAKE_SOURCE_DIR}/include
-    rapidcsv/include
+    ${CMAKE_SOURCE_DIR}/external/rapidcsv/src
 )
 
-add_executable(luxora-cli src/main.cpp)
+add_executable(luxora-cli standalone/main.cpp ${SRC_FILES})
 
-target_link_libraries(luxora-cli PUBLIC rapidcsv)
-target_link_libraries(luxora-cli PUBLIC luxora-lib)
+target_link_libraries(luxora-cli PRIVATE luxora-lib)
 
 enable_testing()
 add_subdirectory(tests)
-
-# set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-# set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-# include(CPack)
