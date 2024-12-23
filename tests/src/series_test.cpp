@@ -19,13 +19,11 @@ TEST(TestSeries, CreationTyped) {
 }
 
 TEST(TestSeries, TypedConversion) {
-	ASSERT_NO_THROW({
-		SeriesUntyped untyped("Age", std::vector({18, 30, 92, 15, 20}));
+	SeriesUntyped untyped("Age", std::vector({18, 30, 92, 15, 20}));
 
-		Series<int> series = untyped.typed<int>();
+	Series<int> series = untyped.typed<int>();
 
-		// ASSERT_EQ(series.count(), 5);
-		// ASSERT_EQ(series.mean(), 35);
-		// ASSERT_EQ(series.median(), 20);
-	});
+	ASSERT_EQ(series.count(), 5);
+	ASSERT_EQ(series.mean(), 35);
+	ASSERT_EQ(series.median(), 20);
 }
