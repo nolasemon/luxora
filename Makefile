@@ -1,3 +1,5 @@
+FILES := $(shell find src include standalone \( -name "*.cpp" -o -name "*.h" \))
+
 .PHONY: FORCE
 
 send:
@@ -14,3 +16,6 @@ test: FORCE
 	cmake -B build -S .
 	cmake --build build
 	./build/tests/luxora-testing
+
+format:
+	clang-format -i $(FILES)
