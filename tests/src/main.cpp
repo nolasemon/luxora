@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <luxora/luxora.h>
 
+#include "dataframe_test.cpp"
 #include "series_test.cpp"
 
 using namespace Luxora;
