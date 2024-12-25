@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug with LLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/luxora-cli",
+            "args": [],
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+        },
+        {
+            "name": "Debug tests with LLDB",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/tests/luxora-testing",
+            "args": [],
+            "stopOnEntry": false,
+            "cwd": "${workspaceFolder}",
+        }
+    ]
+}
