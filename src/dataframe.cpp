@@ -23,7 +23,7 @@ void DataFrame::load_from_document(const rapidcsv::Document& document) {
 		column_names[i]					= document.GetColumnName(i);
 		column_indices[column_names[i]] = i;
 
-		Series<std::string> s = document.GetColumn<std::string>(i);
+		Series<std::string> s = Series<std::string>::from_vector(document.GetColumn<std::string>(i));
 		s.identify_na("");
 		columns.push_back(std::make_unique<Series<std::string>>(s));
 	}

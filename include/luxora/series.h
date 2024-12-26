@@ -32,8 +32,10 @@ class Series : public SeriesUntyped {
 	Storage storage;
 
   public:
-	Series(const std::vector<T>&);
+	Series(const Storage&);
 	Series(const std::initializer_list<Element>&);
+
+	static Series from_vector(const std::vector<T>&);
 
 	template <typename U>
 	Series(const Series<U>& other) {
@@ -80,6 +82,32 @@ class Series : public SeriesUntyped {
 		}
 	}
 
+	template <typename U>
+	Series<U> convert(U conv(const T&)) const {
+		std::vector<std::optional<U>> converted(storage.size());
+		for (size_t i = 0; i < storage.size(); ++i) {
+			if (storage[i].has_value()) {
+				converted[i] = conv(storage[i].value());
+			} else {
+				converted[i] = {};
+			}
+		}
+		return std::move(Series<U>(converted));
+	}
+
+	template <typename U>
+	Series<U> convert(U conv(T)) const {
+		std::vector<std::optional<U>> converted(storage.size());
+		for (size_t i = 0; i < storage.size(); ++i) {
+			if (storage[i].has_value()) {
+				converted[i] = conv(storage[i].value());
+			} else {
+				converted[i] = {};
+			}
+		}
+		return Series<U>(converted);
+	}
+
 	T	   mean() const;
 	T	   median() const;
 	size_t count() const;
@@ -89,14 +117,19 @@ class Series : public SeriesUntyped {
 };
 
 template <typename T>
-Series<T>::Series(const std::vector<T>& vec) : storage(vec.size()) {
-	for (size_t i = 0; i < vec.size(); ++i) {
-		storage[i] = std::make_optional(vec[i]);
-	}
-}
+Series<T>::Series(const Storage& storage) : storage(storage) {}
 
 template <typename T>
 Series<T>::Series(const std::initializer_list<Element>& init) : storage(init) {}
+
+template <typename T>
+Series<T> Series<T>::from_vector(const std::vector<T>& vec) {
+	Storage storage(vec.size());
+	for (size_t i = 0; i < vec.size(); ++i) {
+		storage[i] = std::make_optional(vec[i]);
+	}
+	return std::move(Series(storage));
+}
 
 template <typename T>
 T Series<T>::mean() const {

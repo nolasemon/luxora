@@ -1,5 +1,7 @@
+#include <functional>
 #include <gtest/gtest.h>
 #include <luxora/series.h>
+#include <string>
 
 using namespace Luxora;
 
@@ -14,7 +16,7 @@ TEST(TestSeries, CreationTyped) {
 	ASSERT_EQ(series.mean(), 35);
 	ASSERT_EQ(series.median(), 20);
 
-	Series<int> series2(std::vector<int>{18, 30, 92, 15, 20});
+	Series<int> series2 = Series<int>::from_vector({18, 30, 92, 15, 20});
 
 	ASSERT_EQ(series.size(), 5);
 	ASSERT_EQ(series.type(), typeid(int));
@@ -59,7 +61,7 @@ TEST(TestSeries, TestFillNa) {
 }
 
 TEST(TestSeries, TestIdentifyNa) {
-	Series<int> series(std::vector<int>{-1, 5, 4, 6, -1, 8});
+	Series<int> series = Series<int>::from_vector({-1, 5, 4, 6, -1, 8});
 
 	series.identify_na(-1);
 
@@ -70,4 +72,14 @@ TEST(TestSeries, TestIdentifyNa) {
 
 	ASSERT_EQ(series.size(), 6);
 	ASSERT_EQ(series.count(), 6);
+}
+
+TEST(TestSeries, TestConvert) {
+	Series<int>	  series_int({18, 30, 92, {}, 20});
+	Series<float> series_float = series_int.convert<float>([](int x) { return float(x); });
+	ASSERT_EQ(series_float.mean(), 40.f);
+
+	Series<std::string> series_string = series_int.convert<std::string>(std::to_string);
+	Series<int>			series2		  = series_string.convert<int>([](const std::string& s) { return std::stoi(s); });
+	ASSERT_EQ(series_int, series2);
 }
