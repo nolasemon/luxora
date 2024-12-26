@@ -2,11 +2,14 @@
 #include <luxora/dataframe.h>
 #include <luxora/luxora.h>
 #include <sstream>
+#include <utility>
 
 using namespace Luxora;
 
 TEST(DataFrameTest, NoMissing) {
 	ASSERT_NO_THROW(DataFrame df("resources/full.csv"););
+	DataFrame df("resources/full.csv");
+	ASSERT_EQ(df.shape, std::make_pair(5, 6));
 }
 
 TEST(DataFrameTest, Print) {
@@ -25,6 +28,8 @@ Open,High,Low,Close,Volume,Adj Close\n\
 
 TEST(DataFrameTest, MissingData) {
 	ASSERT_NO_THROW(DataFrame df("resources/missing.csv"));
+	DataFrame df("resources/missing.csv");
+	ASSERT_EQ(df.shape, std::make_pair(5, 6));
 }
 
 TEST(DataFrameTest, PrintMissing) {
@@ -43,7 +48,9 @@ Open,High,Low,Close,Volume,Adj Close\n\
 
 TEST(DataFrameTest, MultipleLoadTest) {
 	DataFrame df;
+	ASSERT_EQ(df.shape, std::make_pair(0, 0));
 	df.load("resources/full.csv");
+	ASSERT_EQ(df.shape, std::make_pair(5, 6));
 	std::ostringstream oss;
 	ASSERT_NO_THROW(oss << df);
 
@@ -57,6 +64,7 @@ Open,High,Low,Close,Volume,Adj Close\n\
 	oss.str("");
 	oss.clear();
 	df.load("resources/missing.csv");
+	ASSERT_EQ(df.shape, std::make_pair(5, 6));
 	oss << df;
 	ASSERT_EQ(oss.str(), "\
 Open,High,Low,Close,Volume,Adj Close\n\

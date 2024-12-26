@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <initializer_list>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <typeindex>
@@ -33,6 +34,24 @@ class Series : public SeriesUntyped {
   public:
 	Series(const std::vector<T>&);
 	Series(const std::initializer_list<Element>&);
+
+	template <typename U>
+	Series(const Series<U>& other) {
+		if constexpr (!std::is_same_v<T, U>) {
+			throw std::runtime_error("Different types");
+		} else {
+			storage = other.storage;
+		}
+	}
+
+	template <typename U>
+	Series(const Series<U>&& other) {
+		if constexpr (!std::is_same_v<T, U>) {
+			throw std::runtime_error("Different types");
+		} else {
+			storage = std::move(other.storage);
+		}
+	}
 
 	std::byte* data() override {
 		return reinterpret_cast<std::byte*>(storage.data());

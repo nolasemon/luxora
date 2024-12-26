@@ -47,12 +47,6 @@ std::ostream& DataFrame::write(std::ostream& os, std::string none = "") const {
 	for (size_t i = 0; i < shape.first; ++i) {
 		for (size_t j = 0; j < shape.second; ++j) {
 			std::optional<std::string> cell = (*columns[j])[i];
-			std::string				   s;
-			if (cell.has_value()) {
-				s = cell.value();
-			} else {
-				s = none;
-			}
 			os << cell.value_or(none) << (j == shape.second - 1 ? '\n' : ',');
 		}
 	}

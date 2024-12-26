@@ -5,6 +5,7 @@
 #include <ostream>
 #include <rapidcsv.h>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <vector>
 
@@ -27,7 +28,9 @@ class DataFrame {
 	std::vector<std::unique_ptr<SeriesUntyped>> columns;
 	std::unordered_map<std::string, size_t>		column_indices;
 	std::vector<std::string>					column_names;
-	std::pair<size_t, size_t>					shape;
+
+  public:
+	std::pair<size_t, size_t> shape;
 
   public:
 	DataFrame();
@@ -54,20 +57,33 @@ class DataFrame {
 	void load_from_document(const rapidcsv::Document& document);
 
 	std::ostream& write(std::ostream& os, std::string none) const;
+	template <class T>
+	Series<T>* get_column(size_t column_id) {
+		Series<T>* column = dynamic_cast<Series<T>*>(columns[column_id].get());
+		if (!column) {
+			throw std::bad_cast();
+		}
+		return column;
+	}
+	template <class T>
+	Series<T>* get_column(std::string column_name) {
+		size_t column_id = column_indices[column_name];
+		return to_series<T>(column_id);
+	}
 };
 
 template <class T>
 void DataFrame::fill_na(std::string column_name, Strategy strategy) {
-	Series<T> column = columns[column_indices[column_name]];
+	// TODO: Test
+	Series<T>* column = get_column<T>(column_name);
 	switch (strategy) {
 	case Strategy::Mean:
-		column.fill_na(column.mean());
+		column->fill_na(column->mean());
 		break;
 	case Strategy::Median:
-		column.fill_na(column.median());
+		column->fill_na(column->median());
 		break;
 	}
-	columns[column_indices[column_name]] = column;
 }
 
 } // namespace Luxora
