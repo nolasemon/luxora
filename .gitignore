@@ -34,4 +34,6 @@
 build
 external/**/tests
 external/**/examples
+external/**/docs
+external/**/doc
 .cache
