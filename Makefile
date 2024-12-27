@@ -10,7 +10,7 @@ send:
 build: FORCE
 	cmake -B build -S .
 	cmake --build build
-	./build/luxora-cli
+	./build/luxora-cli ${args}
 
 test: FORCE
 	cmake -B build -S .
