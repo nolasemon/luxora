@@ -2,15 +2,29 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <typeindex>
+#include <utility>
 #include <vector>
 
 namespace Luxora {
+
+const constexpr auto int2string		= [](const int& x) { return std::to_string(x); };
+const constexpr auto int64_t2string = [](const int64_t& x) { return std::to_string(x); };
+const constexpr auto float2string	= [](const float& x) { return std::to_string(x); };
+const constexpr auto double2string	= [](const double& x) { return std::to_string(x); };
+const constexpr auto size_t2string	= [](const size_t& x) { return std::to_string(x); };
+const constexpr auto string2int		= [](const std::string& x) { return std::stoi(x); };
+const constexpr auto string2int64_t = [](const std::string& x) { return (int64_t)std::stol(x); };
+const constexpr auto string2float	= [](const std::string& x) { return std::stof(x); };
+const constexpr auto string2double	= [](const std::string& x) { return std::stod(x); };
+const constexpr auto string2size_t	= [](const std::string& x) { return (size_t)std::stoul(x); };
 
 class SeriesUntyped {
   public:
@@ -83,7 +97,7 @@ class Series : public SeriesUntyped {
 	}
 
 	template <typename U>
-	Series<U> convert(U conv(const T&)) const {
+	Series<U> convert(std::function<U(const T&)> conv) const {
 		std::vector<std::optional<U>> converted(storage.size());
 		for (size_t i = 0; i < storage.size(); ++i) {
 			if (storage[i].has_value()) {
@@ -96,16 +110,20 @@ class Series : public SeriesUntyped {
 	}
 
 	template <typename U>
-	Series<U> convert(U conv(T)) const {
-		std::vector<std::optional<U>> converted(storage.size());
-		for (size_t i = 0; i < storage.size(); ++i) {
-			if (storage[i].has_value()) {
-				converted[i] = conv(storage[i].value());
-			} else {
-				converted[i] = {};
+	Series<U> easy_convert() const {
+		if constexpr (std::is_convertible_v<T, U>) {
+			std::vector<std::optional<U>> converted(storage.size());
+			for (size_t i = 0; i < storage.size(); ++i) {
+				if (storage[i].has_value()) {
+					converted[i] = static_cast<U>(storage[i].value());
+				} else {
+					converted[i] = {};
+				}
 			}
+			return Series<U>(converted);
+		} else {
+			throw std::invalid_argument("Incompatible type for easy conversion");
 		}
-		return Series<U>(converted);
 	}
 
 	T	   mean() const;

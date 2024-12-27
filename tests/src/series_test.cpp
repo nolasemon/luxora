@@ -76,10 +76,10 @@ TEST(TestSeries, TestIdentifyNa) {
 
 TEST(TestSeries, TestConvert) {
 	Series<int>	  series_int({18, 30, 92, {}, 20});
-	Series<float> series_float = series_int.convert<float>([](int x) { return float(x); });
+	Series<float> series_float = series_int.easy_convert<float>();
 	ASSERT_EQ(series_float.mean(), 40.f);
 
-	Series<std::string> series_string = series_int.convert<std::string>(std::to_string);
-	Series<int>			series2		  = series_string.convert<int>([](const std::string& s) { return std::stoi(s); });
+	Series<std::string> series_string = series_int.convert<std::string>(int2string);
+	Series<int>			series2		  = series_string.convert<int>(string2int);
 	ASSERT_EQ(series_int, series2);
 }

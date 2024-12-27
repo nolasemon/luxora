@@ -2,6 +2,8 @@
 #include <luxora/dataframe.h>
 #include <luxora/luxora.h>
 #include <sstream>
+#include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 using namespace Luxora;
@@ -85,4 +87,33 @@ TEST(DataFrameTest, SaveTest) {
 	DataFrame df2;
 	df2.load(iss);
 	ASSERT_EQ(df, df2);
+}
+
+TEST(DataFrameTest, AddColumnTest) {
+	DataFrame df("resources/missing.csv");
+	ASSERT_EQ(df.shape, std::make_pair(5, 6));
+	df.add_column<float>("float_column");
+
+	ASSERT_EQ(df.shape, std::make_pair(5, 7));
+
+	ASSERT_THROW(df.add_column<float>("float_column"), std::invalid_argument);
+}
+
+TEST(DataFrameTest, TestConvertColumn) {
+	DataFrame df("resources/missing.csv");
+	df.convert_column<int>("High");
+	ASSERT_THROW(df.convert_column<long long>("High", "High"), std::invalid_argument);
+	df.convert_column<long long>("Low", "long_column");
+	ASSERT_ANY_THROW(df.convert_column<std::string>("Adj Close"));
+	df.convert_column<float>("Volume");
+	df.convert_column<size_t>("Volume", "new volume");
+	std::ostringstream oss;
+	oss << df;
+	ASSERT_EQ(oss.str(), "\
+Open,High,Low,Close,Volume,Adj Close,long_column,new volume\n\
+64.529999,64,64.139999,64.620003,21705200.000000,64.620003,64,21705200\n\
+64.419998,64,64.190002,64.620003,20235200.000000,64.620003,64,20235200\n\
+64.330002,64,64.050003,64.360001,19259700.000000,64.360001,64,19259700\n\
+64.610001,64,64.449997,64.489998,19384900.000000,64.489998,64,19384900\n\
+64.470001,64,64.300003,`None`,21234600.000000,64.620003,64,21234600\n");
 }
