@@ -1,6 +1,7 @@
 #include <fstream>
 #include <istream>
 #include <luxora/dataframe.h>
+#include <luxora/series.h>
 #include <memory>
 #include <rapidcsv.h>
 #include <string>
@@ -53,6 +54,19 @@ std::ostream& DataFrame::write(std::ostream& os, std::string none = "") const {
 	return os;
 }
 
+std::ostream& DataFrame::choose_rows(std::ostream& os, std::vector<size_t> indices) const {
+	for (size_t j = 0; j < shape.second; ++j) {
+		os << column_names[j] << (j == shape.second - 1 ? '\n' : ',');
+	}
+	for (auto i : indices) {
+		for (size_t j = 0; j < shape.second; ++j) {
+			std::optional<std::string> cell = (*columns[j])[i];
+			os << cell.value_or("`None`") << (j == shape.second - 1 ? '\n' : ',');
+		}
+	}
+	return os;
+}
+
 void DataFrame::save(std::string filename) const {
 	std::ofstream file(filename);
 	save(file);
@@ -77,6 +91,27 @@ bool operator==(const DataFrame& lhs, const DataFrame& rhs) {
 		}
 	}
 	return true;
+}
+
+void DataFrame::fill_na(std::string column_name, Strategy strategy) {
+	size_t			column_id = column_indices[column_name];
+	std::type_index ti		  = columns[column_id]->type();
+	// clang-format off
+		#define support2(type)                                                                                                 \
+			else if (ti == typeid(type)) {                                                                                     \
+				fill_na_typed<type>(column_name, strategy);\
+				return;                                                                                                        \
+			}
+		if constexpr (false) {} 
+			support2(int) 
+			support2(long long)
+			support2(float)
+			support2(double)
+			support2(size_t)
+			support2(std::string)
+		// clang-format on
+		throw std::invalid_argument("Imputation of column " + column_name + " with type " + type_name(ti) +
+									" is not supported.");
 }
 
 } // namespace Luxora

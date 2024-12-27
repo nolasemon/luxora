@@ -50,6 +50,11 @@ enum Strategy {
 	Median,
 };
 
+enum NormMethod {
+	MinMax,
+	Zscore,
+};
+
 class DataFrame {
 	std::vector<std::unique_ptr<SeriesUntyped>> columns;
 	std::unordered_map<std::string, size_t>		column_indices;
@@ -66,6 +71,8 @@ class DataFrame {
 	void load(std::istream& is);
 	void save(std::string filename) const;
 	void save(std::ostream& os) const;
+
+	std::ostream& choose_rows(std::ostream&, std::vector<size_t> rows) const;
 
 	template <typename T>
 	size_t add_column(std::string name);
@@ -93,24 +100,27 @@ class DataFrame {
 										"` is not supported.");
 	}
 
-	template <class T>
 	void fill_na(std::string column_name, Strategy strategy = Strategy::Mean);
 
-	void normailize(std::string column_name);
-
 	template <class T>
-	std::vector<T>		outliers(std::string column_name);
+	std::vector<T> outliers(std::string column_name);
+	template <class T>
 	std::vector<size_t> outlier_indices(std::string column_name);
 
 	friend std::ostream& operator<<(std::ostream& out, const DataFrame& df);
 	friend bool			 operator==(const DataFrame& lhs, const DataFrame& rhs);
 
+	template <class T>
+	void normalize(std::string column_name, std::string new_name = "", NormMethod method = MinMax);
+
   private:
+	DataFrame(std::vector<std::string>, std::unordered_map<std::string, size_t>, const std::vector<SeriesUntyped>&);
+
 	void load_from_document(const rapidcsv::Document& document);
 
 	std::ostream& write(std::ostream& os, std::string none) const;
 	template <class T>
-	Series<T>* get_column(size_t column_id) {
+	Series<T>* get_column(size_t column_id) const {
 		if (typeid(T) != columns[column_id]->type()) {
 			throw std::invalid_argument("Supplied type differs from original");
 		}
@@ -121,8 +131,8 @@ class DataFrame {
 		return column;
 	}
 	template <class T>
-	Series<T>* get_column(std::string column_name) {
-		size_t column_id = column_indices[column_name];
+	Series<T>* get_column(std::string column_name) const {
+		size_t column_id = column_indices.at(column_name);
 		return get_column<T>(column_id);
 	}
 
@@ -132,6 +142,9 @@ class DataFrame {
 	void convert_column_easy_conv(std::string column_name, std::string new_name = "");
 	template <class T, class U>
 	void convert_column_strictly_typed(std::string column_name, std::string new_name = "");
+
+	template <class T>
+	void fill_na_typed(std::string column_name, Strategy strategy = Strategy::Mean);
 };
 
 template <class T, class U>
@@ -140,12 +153,12 @@ void DataFrame::convert_column_with_conv(std::function<U(const T&)> conv, std::s
 	size_t	   column_id = column_indices[column_name];
 	Series<T>* series	 = get_column<T>(column_id);
 	if (new_name == "") {
-		Series<U> new_series = series->template convert<U>(conv);
+		Series<U> new_series = series->template map<U>(conv);
 		columns[column_id]	 = std::make_unique<Series<U>>(new_series);
 	} else {
 		size_t	   new_column = add_column<U>(new_name);
 		Series<U>* new_series = get_column<U>(new_column);
-		*new_series			  = series->template convert<U>(conv);
+		*new_series			  = series->template map<U>(conv);
 	}
 }
 
@@ -154,12 +167,12 @@ void DataFrame::convert_column_easy_conv(std::string column_name, std::string ne
 	size_t	   column_id = column_indices[column_name];
 	Series<T>* series	 = get_column<T>(column_id);
 	if (new_name == "") {
-		Series<U> new_series = series->template easy_convert<U>();
+		Series<U> new_series = series->template cast<U>();
 		columns[column_id]	 = std::make_unique<Series<U>>(new_series);
 	} else {
 		size_t	   new_column = add_column<U>(new_name);
 		Series<U>* new_series = get_column<U>(new_column);
-		*new_series			  = series->template easy_convert<U>();
+		*new_series			  = series->template cast<U>();
 	}
 }
 
@@ -209,7 +222,7 @@ void DataFrame::convert_column_strictly_typed(std::string column_name, std::stri
 }
 
 template <class T>
-void DataFrame::fill_na(std::string column_name, Strategy strategy) {
+void DataFrame::fill_na_typed(std::string column_name, Strategy strategy) {
 	// TODO: Test
 	Series<T>* column = get_column<T>(column_name);
 	switch (strategy) {
@@ -220,6 +233,38 @@ void DataFrame::fill_na(std::string column_name, Strategy strategy) {
 		column->fill_na(column->median());
 		break;
 	}
+}
+
+template <class T>
+void DataFrame::normalize(std::string column_name, std::string new_name, NormMethod method) {
+	size_t	  column_id = column_indices[column_name];
+	Series<T>*series	= get_column<T>(column_id), *new_series;
+	if (new_name == "") {
+		new_series = series;
+	} else {
+		size_t new_column = add_column<T>(new_name);
+		new_series		  = get_column<T>(new_column);
+	}
+	switch (method) {
+	case MinMax:
+		*new_series = series->normalized_minmax();
+		break;
+	case Zscore:
+		*new_series = series->normalized_zscore();
+		break;
+	}
+}
+
+template <class T>
+std::vector<T> DataFrame::outliers(std::string column_name) {
+	Series<T>* series = get_column<T>(column_name);
+	return series->outliers();
+}
+
+template <class T>
+std::vector<size_t> DataFrame::outlier_indices(std::string column_name) {
+	Series<T>* series = get_column<T>(column_name);
+	return series->outlier_indices();
 }
 
 template <typename T>

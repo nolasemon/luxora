@@ -126,7 +126,7 @@ Open,High,Low,Close,Volume,Adj Close,long_column,new volume\n\
 TEST(DataFrameTest, FillNaTest) {
 	DataFrame df("resources/missing.csv");
 	df.convert_column<float>("Close");
-	df.fill_na<float>("Close", Strategy::Median);
+	df.fill_na("Close", Strategy::Median);
 	std::ostringstream oss;
 	oss << df;
 	ASSERT_EQ(oss.str(), "Open,High,Low,Close,Volume,Adj Close\n\
