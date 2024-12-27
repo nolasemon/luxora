@@ -167,7 +167,7 @@ T Series<T>::median() const {
 			buf[i++] = x.value();
 		}
 	}
-	std::sort(buf.begin(), buf.end());
+	std::sort(buf.rbegin(), buf.rend());
 	if (buf.size() % 2 == 1) {
 		return buf[buf.size() / 2];
 	} else {

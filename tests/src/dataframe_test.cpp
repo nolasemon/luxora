@@ -96,15 +96,20 @@ TEST(DataFrameTest, AddColumnTest) {
 
 	ASSERT_EQ(df.shape, std::make_pair(5, 7));
 
+	// Same name
 	ASSERT_THROW(df.add_column<float>("float_column"), std::invalid_argument);
 }
 
 TEST(DataFrameTest, TestConvertColumn) {
 	DataFrame df("resources/missing.csv");
 	df.convert_column<int>("High");
+
+	// Same name
 	ASSERT_THROW(df.convert_column<long long>("High", "High"), std::invalid_argument);
 	df.convert_column<long long>("Low", "long_column");
-	ASSERT_ANY_THROW(df.convert_column<std::string>("Adj Close"));
+
+	// No conversion needed string->string
+	ASSERT_THROW(df.convert_column<std::string>("Adj Close"), std::invalid_argument);
 	df.convert_column<float>("Volume");
 	df.convert_column<size_t>("Volume", "new volume");
 	std::ostringstream oss;
@@ -116,4 +121,18 @@ Open,High,Low,Close,Volume,Adj Close,long_column,new volume\n\
 64.330002,64,64.050003,64.360001,19259700.000000,64.360001,64,19259700\n\
 64.610001,64,64.449997,64.489998,19384900.000000,64.489998,64,19384900\n\
 64.470001,64,64.300003,`None`,21234600.000000,64.620003,64,21234600\n");
+}
+
+TEST(DataFrameTest, FillNaTest) {
+	DataFrame df("resources/missing.csv");
+	df.convert_column<float>("Close");
+	df.fill_na<float>("Close", Strategy::Median);
+	std::ostringstream oss;
+	oss << df;
+	ASSERT_EQ(oss.str(), "Open,High,Low,Close,Volume,Adj Close\n\
+64.529999,64.800003,64.139999,64.620003,21705200,64.620003\n\
+64.419998,64.730003,64.190002,64.620003,20235200,64.620003\n\
+64.330002,64.389999,64.050003,64.360001,19259700,64.360001\n\
+64.610001,64.949997,64.449997,64.489998,19384900,64.489998\n\
+64.470001,64.690002,64.300003,64.555000,21234600,64.620003\n");
 }
