@@ -19,5 +19,7 @@ target_link_libraries(luxora-testing
 add_executable(debug-test src/debug.cpp)
 target_link_libraries(debug-test PRIVATE luxora-lib)
 
+file(COPY ../resources DESTINATION ./)
+
 add_test(NAME LuxoraTesting COMMAND luxora-testing)
 
