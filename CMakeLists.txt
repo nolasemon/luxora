@@ -11,7 +11,7 @@ file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_subdirectory(external/rapidcsv)
 
-add_library(luxora-lib standalone/lib.cpp ${SRC_FILES} src/series.cpp)
+add_library(luxora-lib standalone/lib.cpp ${SRC_FILES})
 target_include_directories(luxora-lib
     PUBLIC
     ${CMAKE_SOURCE_DIR}/include
@@ -19,7 +19,6 @@ target_include_directories(luxora-lib
 )
 
 add_executable(luxora-cli standalone/main.cpp ${SRC_FILES})
-
 target_link_libraries(luxora-cli PRIVATE luxora-lib)
 
 enable_testing()

@@ -9,18 +9,19 @@ CLI tool for data preparation.
     - [x] Imputation of mean or median of the column  
     - [ ] Arbitrary format of missing data  
 - [x] Normalization of data ranges for specific columns.  
-  Both Z-score and MinMax  
-- [ ] Outlier detection using IQR  
-- [x] Export cleaned data to a new file  e
+    - Both Z-score and MinMax  
+- [x] Outlier detection using IQR  
+- [x] Export cleaned data to a new file
 - [ ] Data info  
 - [ ] Time data type  
 - [ ] Arbitrary Index column  
 - [ ] Interactive  
 
 ### Development
-- `make build` for build and run
-- `make build args="..."` for running with args
-- `make test` for testing
+- `make build` for build
+- `make run -- ...` for running with args
+- `make debug-test` for compiling debuggable executable of a single test
+- `make test` for general testing
 - Executable along with lib will be inside `build` directory
 
 ### Usage examples

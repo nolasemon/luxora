@@ -11,10 +11,10 @@
             "cwd": "${workspaceFolder}",
         },
         {
-            "name": "Debug tests with LLDB",
+            "name": "Debug test with LLDB",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/build/tests/luxora-testing",
+            "program": "${workspaceFolder}/build/tests/debug-test",
             "args": [],
             "stopOnEntry": false,
             "cwd": "${workspaceFolder}",

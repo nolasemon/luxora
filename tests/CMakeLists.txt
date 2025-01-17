@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(LuxoraTesting)
+set(CMAKE_BUILD_TYPE Debug)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
@@ -14,6 +15,9 @@ target_link_libraries(luxora-testing
     gtest
     gtest_main
 )
+
+add_executable(debug-test src/debug.cpp)
+target_link_libraries(debug-test PRIVATE luxora-lib)
 
 add_test(NAME LuxoraTesting COMMAND luxora-testing)
 
