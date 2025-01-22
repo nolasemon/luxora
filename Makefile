@@ -8,6 +8,8 @@ TEST_EXEC := luxora-testing
 
 .PHONY: FORCE
 
+default: build
+
 send:
 	git clone --recurse-submodules . luxora
 	zip -r luxora.zip luxora
@@ -26,7 +28,7 @@ debug-test: FORCE
 	./${TESTS}/${DTEST}
 
 test: FORCE
-	cmake -B build -S .
+	cmake -B ${BUILD} -S .
 	cmake --build ${BUILD} --target ${TEST_EXEC}
 	./${TESTS}/${TEST_EXEC}
 

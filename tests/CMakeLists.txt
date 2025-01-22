@@ -21,5 +21,5 @@ target_link_libraries(debug-test PRIVATE luxora-lib)
 
 file(COPY ../resources DESTINATION ./)
 
-add_test(NAME LuxoraTesting COMMAND luxora-testing)
-
+include(GoogleTest)
+gtest_discover_tests(luxora-testing)

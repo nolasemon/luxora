@@ -10,6 +10,7 @@ set(CMAKE_BUILD_TYPE Debug)
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_subdirectory(external/rapidcsv)
+add_subdirectory(external/googletest)
 
 add_library(luxora-lib standalone/lib.cpp ${SRC_FILES})
 target_include_directories(luxora-lib
