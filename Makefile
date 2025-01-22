@@ -1,4 +1,4 @@
-FILES := $(shell find src include standalone \( -name "*.cpp" -o -name "*.h" \))
+FILES := $(shell find src include standalone tests \( -name "*.cpp" -o -name "*.h" \))
 BUILD := build
 TESTS := build/tests
 
@@ -30,7 +30,7 @@ debug-test: FORCE
 test: FORCE
 	cmake -B ${BUILD} -S .
 	cmake --build ${BUILD} --target ${TEST_EXEC}
-	./${TESTS}/${TEST_EXEC}
+	ctest --test-dir ${BUILD}
 
 format:
 	clang-format -i $(FILES)
