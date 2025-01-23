@@ -11,7 +11,7 @@ bool operator==(const SeriesUntyped& lhs, const SeriesUntyped& rhs) {
     if (lhs.size() != rhs.size()) {
         return false;
     }
-    return std::memcmp(lhs.data(), rhs.data(), lhs.size() * lhs.type_size());
+    return std::memcmp(lhs.data(), rhs.data(), lhs.size() * lhs.type_size()) == 0;
 }
 
 } // namespace Luxora
