@@ -1,0 +1,24 @@
+name: C/C++ CI
+
+on: push
+
+env:
+  CXX: g++-14
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - run: make test
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'true'
+    - run: make build
