@@ -1,3 +1,4 @@
+#include "luxora/fixed_string.h"
 #include <fstream>
 #include <istream>
 #include <luxora/dataframe.h>
@@ -24,9 +25,9 @@ void DataFrame::load_from_document(const rapidcsv::Document& document) {
         column_names[i]                 = document.GetColumnName(i);
         column_indices[column_names[i]] = i;
 
-        Series<std::string> s = Series<std::string>::from_vector(document.GetColumn<std::string>(i));
-        s.identify_na("");
-        columns.push_back(std::make_unique<Series<std::string>>(s));
+        Series s = Series<String>::from_vector(document.GetColumn<std::string>(i));
+        s.identify_na(String(""));
+        columns.push_back(std::make_unique<Series<String>>(s));
     }
     shape.first = columns[0]->size();
 }
@@ -47,7 +48,7 @@ std::ostream& DataFrame::write(std::ostream& os, std::string none = "") const {
     }
     for (size_t i = 0; i < shape.first; ++i) {
         for (size_t j = 0; j < shape.second; ++j) {
-            std::optional<std::string> cell = (*columns[j])[i];
+            std::optional<std::string> cell = columns[j]->string_at(i);
             os << cell.value_or(none) << (j == shape.second - 1 ? '\n' : ',');
         }
     }
@@ -60,7 +61,7 @@ std::ostream& DataFrame::choose_rows(std::ostream& os, std::vector<size_t> indic
     }
     for (auto i : indices) {
         for (size_t j = 0; j < shape.second; ++j) {
-            std::optional<std::string> cell = (*columns[j])[i];
+            std::optional<std::string> cell = columns[j]->string_at(i);
             os << cell.value_or("`None`") << (j == shape.second - 1 ? '\n' : ',');
         }
     }
@@ -108,7 +109,7 @@ void DataFrame::fill_na(std::string column_name, Strategy strategy) {
 			support2(float)
 			support2(double)
 			support2(size_t)
-			support2(std::string)
+			support2(String)
         // clang-format on
         throw std::invalid_argument("Imputation of column " + column_name + " with type " + type_name(ti) +
                                     " is not supported.");

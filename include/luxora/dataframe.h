@@ -1,10 +1,11 @@
 #pragma once
 
+#include "luxora/fixed_string.h"
 #include "luxora/series.h"
 #include <algorithm>
 #include <cstdint>
 #include <functional>
-#include <memory>
+#include <iostream>
 #include <ostream>
 #include <rapidcsv.h>
 #include <stdexcept>
@@ -17,33 +18,6 @@
 #include <vector>
 
 namespace Luxora {
-
-#if defined(__GNUG__)
-#include <cxxabi.h>
-#include <memory>
-
-inline std::string demangle(const char* mangledName) {
-    int                                    status = 0;
-    std::unique_ptr<char, void (*)(void*)> realname(abi::__cxa_demangle(mangledName, 0, 0, &status), std::free);
-    return status == 0 ? realname.get() : mangledName;
-}
-#else
-std::string demangle(const char* mangledName) {
-    return mangledName;
-}
-#endif
-
-inline std::string type_name(std::type_index ti) {
-    return demangle(ti.name());
-}
-
-using Position = std::pair<size_t, size_t>;
-
-struct PositionHash {
-    size_t operator()(const Position& p) const {
-        return std::hash<size_t>{}(p.first) ^ std::hash<size_t>{}(p.second);
-    }
-};
 
 enum Strategy {
     Mean,
@@ -93,7 +67,7 @@ class DataFrame {
 			support1(float)
 			support1(double)
 			support1(size_t)
-			support1(std::string)
+			support1(String)
             // clang-format on
 
             throw std::invalid_argument("Conversion from `" + type_name(ti) + "` to `" + type_name(typeid(U)) +
@@ -101,6 +75,11 @@ class DataFrame {
     }
 
     void fill_na(std::string column_name, Strategy strategy = Strategy::Mean);
+
+    template <typename T>
+    Series<T>& column_at(size_t index) {
+        return *get_column<T>(index);
+    }
 
     template <class T>
     std::vector<T> outliers(std::string column_name);
@@ -119,6 +98,7 @@ class DataFrame {
     void load_from_document(const rapidcsv::Document& document);
 
     std::ostream& write(std::ostream& os, std::string none) const;
+
     template <class T>
     Series<T>* get_column(size_t column_id) const {
         if (typeid(T) != columns[column_id]->type()) {
@@ -184,7 +164,7 @@ void DataFrame::convert_column_strictly_typed(std::string column_name, std::stri
     } else if constexpr (std::is_convertible_v<T, U>) { // easy conversion
         convert_column_easy_conv<T, U>(column_name, new_name);
         return;
-    } else if constexpr (std::is_same_v<U, std::string>) {
+    } else if constexpr (std::is_same_v<U, String>) {
         // clang-format off
 		#define elseif1(type)                                                                                                  \
 			else if constexpr (std::is_same_v<T, type>) {                                                                      \
@@ -200,7 +180,7 @@ void DataFrame::convert_column_strictly_typed(std::string column_name, std::stri
 			elseif1(float)
 			elseif1(double)
 			elseif1(size_t)
-	} else if constexpr (std::is_same_v<T, std::string>) {
+	} else if constexpr (std::is_same_v<T, String>) {
 		#define elseif2(type)                                                                                                  \
 			else if constexpr (std::is_same_v<U, type>) {                                                                      \
 				convert_column_with_conv<T, U>(string2##type, column_name, new_name);                                          \

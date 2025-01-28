@@ -6,8 +6,9 @@ set(CMAKE_CXX_EXTENSIONS off)
 set(CMAKE_CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED on)
 set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -fsanitize=address -fno-omit-frame-pointer")
 
-add_compile_options(-Wall -Wpedantic)
+add_compile_options(-Wall -Wpedantic -Wextra)
 
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 

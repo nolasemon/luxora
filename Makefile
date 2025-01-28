@@ -16,7 +16,7 @@ send:
 	rm -rf luxora
 
 build: FORCE
-	cmake -B build -S .
+	cmake -B ${BUILD} -S .
 	cmake --build ${BUILD} --target ${EXEC}
 
 run: build
@@ -30,7 +30,7 @@ debug-test: FORCE
 test: FORCE
 	cmake -B ${BUILD} -S .
 	cmake --build ${BUILD} --target ${TEST_EXEC}
-	ctest --test-dir ${BUILD}
+	ctest --test-dir ${BUILD} $(filter-out $@,$(MAKECMDGOALS))
 
 format:
 	clang-format -i $(FILES)

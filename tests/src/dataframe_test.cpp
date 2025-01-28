@@ -34,6 +34,12 @@ TEST(DataFrameTest, MissingData) {
     ASSERT_EQ(df.shape, std::make_pair(5, 6));
 }
 
+TEST(DataFrameTest, IdentifyMissingData) {
+    DataFrame df("resources/missing.csv");
+    ASSERT_TRUE(df.column_at<String>(3).has_na());
+    ASSERT_FALSE(df.column_at<String>(2).has_na());
+}
+
 TEST(DataFrameTest, PrintMissing) {
     DataFrame          df("resources/missing.csv");
     std::ostringstream oss;

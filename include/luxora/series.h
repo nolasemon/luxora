@@ -1,5 +1,6 @@
 #pragma once
 
+#include "luxora/fixed_string.h"
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
@@ -16,33 +17,54 @@
 #include <utility>
 #include <vector>
 
+#if defined(__GNUG__)
+#include <cxxabi.h>
+#include <memory>
+
+inline std::string demangle(const char* mangledName) {
+    int                                    status = 0;
+    std::unique_ptr<char, void (*)(void*)> realname(abi::__cxa_demangle(mangledName, 0, 0, &status), std::free);
+    return status == 0 ? realname.get() : mangledName;
+}
+#else
+std::string demangle(const char* mangledName) {
+    return mangledName;
+}
+#endif
+
+inline std::string type_name(std::type_index ti) {
+    return demangle(ti.name());
+}
+
 namespace Luxora {
 
-const constexpr auto int2string     = [](const int& x) { return std::to_string(x); };
-const constexpr auto int64_t2string = [](const int64_t& x) { return std::to_string(x); };
-const constexpr auto float2string   = [](const float& x) { return std::to_string(x); };
-const constexpr auto double2string  = [](const double& x) { return std::to_string(x); };
-const constexpr auto size_t2string  = [](const size_t& x) { return std::to_string(x); };
-const constexpr auto string2int     = [](const std::string& x) { return std::stoi(x); };
-const constexpr auto string2int64_t = [](const std::string& x) { return (int64_t)std::stol(x); };
-const constexpr auto string2float   = [](const std::string& x) { return std::stof(x); };
-const constexpr auto string2double  = [](const std::string& x) { return std::stod(x); };
-const constexpr auto string2size_t  = [](const std::string& x) { return (size_t)std::stoul(x); };
+const constexpr auto int2string     = [](int x) { return to_string(x); };
+const constexpr auto int64_t2string = [](int64_t x) { return to_string(x); };
+const constexpr auto float2string   = [](float x) { return to_string(x); };
+const constexpr auto double2string  = [](double x) { return to_string(x); };
+const constexpr auto size_t2string  = [](size_t x) { return to_string(x); };
+const constexpr auto string2int     = [](String x) { return x.to_int(); };
+const constexpr auto string2int64_t = [](String x) { return x.to_long(); };
+const constexpr auto string2float   = [](String x) { return x.to_float(); };
+const constexpr auto string2double  = [](String x) { return x.to_double(); };
+const constexpr auto string2size_t  = [](String x) { return x.to_long(); };
 
 class SeriesUntyped {
   public:
-    virtual ~SeriesUntyped()                   = default;
-    virtual std::byte*       data()            = 0;
-    virtual const std::byte* data() const      = 0;
-    virtual size_t           size() const      = 0;
-    virtual std::type_index  type() const      = 0;
-    virtual size_t           type_size() const = 0;
+    virtual ~SeriesUntyped()                            = default;
+    virtual std::byte*       data()                     = 0;
+    virtual const std::byte* data() const               = 0;
+    virtual size_t           size() const               = 0;
+    virtual std::type_index  type() const               = 0;
+    virtual size_t           type_size() const          = 0;
+    virtual size_t           optional_type_size() const = 0;
 
-    virtual std::optional<std::string> operator[](size_t) const = 0;
+    virtual std::optional<std::string> string_at(size_t) const = 0;
     friend bool                        operator==(const SeriesUntyped&, const SeriesUntyped&);
 };
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 class Series : public SeriesUntyped {
     using Element = std::optional<T>;
     using Storage = std::vector<Element>;
@@ -53,28 +75,19 @@ class Series : public SeriesUntyped {
 
   public:
     Series(const Storage&);
+    Series(Storage&& storage) : storage(std::move(storage)) {};
     Series(const std::initializer_list<Element>&);
 
-    static Series from_vector(const std::vector<T>&);
-    Storage       get_vector() const;
-
-    template <typename U>
-    Series(const Series<U>& other) {
-        if constexpr (!std::is_same_v<T, U>) {
-            throw std::runtime_error("Different types");
-        } else {
-            storage = other.storage;
+    template <typename U = T>
+        requires std::is_convertible_v<U, T>
+    static Series from_vector(const std::vector<U>& vec) {
+        Storage storage(vec.size());
+        for (size_t i = 0; i < vec.size(); ++i) {
+            storage[i] = static_cast<T>(vec[i]);
         }
+        return Series(storage);
     }
-
-    template <typename U>
-    Series(const Series<U>&& other) {
-        if constexpr (!std::is_same_v<T, U>) {
-            throw std::runtime_error("Different types");
-        } else {
-            storage = std::move(other.storage);
-        }
-    }
+    Storage get_vector() const;
 
     std::byte* data() override {
         return reinterpret_cast<std::byte*>(storage.data());
@@ -91,20 +104,30 @@ class Series : public SeriesUntyped {
     size_t type_size() const override {
         return sizeof(T);
     }
+    size_t optional_type_size() const override {
+        return sizeof(Element);
+    }
 
-    std::optional<std::string> operator[](size_t index) const override {
+    std::optional<std::string> string_at(size_t index) const override {
         if (!storage[index].has_value()) {
             return {};
         }
         if constexpr (std::is_same_v<T, std::string>) {
             return storage[index].value();
-        } else {
+        } else if constexpr (std::is_integral_v<T> || std::is_floating_point_v<T>) {
             return std::to_string(storage[index].value());
+        } else {
+            return storage[index].value().to_string();
         }
     }
 
+    std::optional<T> operator[](size_t index) {
+        return storage[index];
+    }
+
     template <typename U>
-    Series<U> map(std::function<U(const T&)> f) const {
+        requires std::is_trivially_copyable_v<U>
+    Series<U> map(std::function<U(T)> f) const {
         std::vector<std::optional<U>> converted(storage.size());
         for (size_t i = 0; i < storage.size(); ++i) {
             if (storage[i].has_value()) {
@@ -117,7 +140,8 @@ class Series : public SeriesUntyped {
     }
 
     template <typename U>
-    Series<U> map_option(std::function<std::optional<U>(const Element&)> f) const {
+        requires std::is_trivially_copyable_v<U>
+    Series<U> map_option(std::function<std::optional<U>(Element)> f) const {
         std::vector<std::optional<U>> converted(storage.size());
         for (size_t i = 0; i < storage.size(); ++i) {
             converted[i] = f(storage[i]);
@@ -125,7 +149,7 @@ class Series : public SeriesUntyped {
         return Series<U>(converted);
     }
 
-    Series<T> map(std::function<T(const T&)> f) const {
+    Series<T> map(std::function<T(T)> f) const {
         std::vector<std::optional<T>> converted(storage.size());
         for (size_t i = 0; i < storage.size(); ++i) {
             if (storage[i].has_value()) {
@@ -137,7 +161,7 @@ class Series : public SeriesUntyped {
         return Series<T>(converted);
     }
 
-    void map_inplace(std::function<T(const T&)> f) {
+    void map_inplace(std::function<T(T)> f) {
         for (size_t i = 0; i < storage.size(); ++i) {
             if (storage[i].has_value()) {
                 storage[i] = f(storage[i].value());
@@ -148,27 +172,24 @@ class Series : public SeriesUntyped {
         needs_update = true;
     }
 
-    void map_inplace_option(std::function<std::optional<T>(const std::optional<T>&)> f) const {
+    void map_inplace_option(std::function<std::optional<T>(std::optional<T>)> f) const {
         for (size_t i = 0; i < storage.size(); ++i) {
             storage[i] = f(storage[i]);
         }
     }
 
     template <typename U>
+        requires std::is_convertible_v<T, U>
     Series<U> cast() const {
-        if constexpr (std::is_convertible_v<T, U>) {
-            std::vector<std::optional<U>> converted(storage.size());
-            for (size_t i = 0; i < storage.size(); ++i) {
-                if (storage[i].has_value()) {
-                    converted[i] = static_cast<U>(storage[i].value());
-                } else {
-                    converted[i] = {};
-                }
+        std::vector<std::optional<U>> converted(storage.size());
+        for (size_t i = 0; i < storage.size(); ++i) {
+            if (storage[i].has_value()) {
+                converted[i] = static_cast<U>(storage[i].value());
+            } else {
+                converted[i] = {};
             }
-            return Series<U>(converted);
-        } else {
-            throw std::invalid_argument("Incompatible type for easy conversion");
         }
+        return Series<U>(converted);
     }
 
     T sum() const;
@@ -193,8 +214,16 @@ class Series : public SeriesUntyped {
     std::vector<T>      outliers();
     std::vector<size_t> outlier_indices();
 
-    void identify_na(const T& na);
-    void fill_na(const T& fill);
+    void identify_na(T na);
+    void fill_na(T fill);
+    bool has_na() const {
+        for (Element x : storage) {
+            if (!x.has_value()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     template <typename T2>
     friend std::ostream& operator<<(std::ostream&, const Series<T2>&);
@@ -205,26 +234,21 @@ class Series : public SeriesUntyped {
 };
 
 template <typename T>
-Series<T>::Series(const Storage& storage) : storage(storage) {}
+    requires std::is_trivially_copyable_v<T>
+Series<T>::Series(const Storage& storage) : storage(storage.begin(), storage.end()) {}
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 Series<T>::Series(const std::initializer_list<Element>& init) : storage(init) {}
 
 template <typename T>
-Series<T> Series<T>::from_vector(const std::vector<T>& vec) {
-    Storage storage(vec.size());
-    for (size_t i = 0; i < vec.size(); ++i) {
-        storage[i] = std::make_optional(vec[i]);
-    }
-    return std::move(Series(storage));
-}
-
-template <typename T>
+    requires std::is_trivially_copyable_v<T>
 std::vector<std::optional<T>> Series<T>::get_vector() const {
     return storage;
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::mean() const {
     if constexpr (std::is_arithmetic_v<T>) {
         size_t c = count();
@@ -238,6 +262,7 @@ T Series<T>::mean() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::sum() const {
     if constexpr (std::is_arithmetic_v<T>) {
         T sum = 0;
@@ -251,6 +276,7 @@ T Series<T>::sum() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::median() const {
     size_t c = count();
     if (c == 0) {
@@ -276,6 +302,7 @@ T Series<T>::median() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::max() const {
     // TODO comparable
     size_t i = 0;
@@ -292,6 +319,7 @@ T Series<T>::max() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::min() const {
     size_t i = 0;
     while (!storage[i].has_value()) {
@@ -307,11 +335,13 @@ T Series<T>::min() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::range() const {
     return max() - min();
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 size_t Series<T>::count() const {
     size_t len = 0;
     for (const std::optional<T>& x : storage) {
@@ -321,6 +351,7 @@ size_t Series<T>::count() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::quantile(float q) {
     sort();
     size_t index = q * count();
@@ -328,11 +359,13 @@ T Series<T>::quantile(float q) {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::iqr() {
     return quantile(0.75) - quantile(0.25);
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::variance() const {
     if constexpr (std::is_arithmetic_v<T>) {
         T mean_ = mean();
@@ -349,11 +382,13 @@ T Series<T>::variance() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 T Series<T>::stddev() const {
     return std::sqrt(variance());
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 Series<T> Series<T>::normalized_minmax() const {
     if constexpr (std::is_arithmetic_v<T>) {
         T min_ = min(), max_ = max();
@@ -365,6 +400,7 @@ Series<T> Series<T>::normalized_minmax() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 Series<T> Series<T>::normalized_zscore() const {
     if constexpr (std::is_arithmetic_v<T>) {
         T mean_ = mean(), stddev_ = stddev();
@@ -375,10 +411,12 @@ Series<T> Series<T>::normalized_zscore() const {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 std::vector<size_t> Series<T>::outlier_indices() {
-    T                   q1 = quantile(0.25), q3 = quantile(0.75);
-    T                   iqr_        = iqr();
-    T                   upper_bound = q3 + 1.5f * iqr_, lower_bound = q1 - 1.5f * iqr_;
+    T q1 = quantile(0.25), q3 = quantile(0.75);
+    T iqr_        = iqr();
+    T upper_bound = q3 + 1.5f * iqr_, lower_bound = q1 - 1.5f * iqr_;
+
     std::vector<size_t> res;
     for (size_t i = 0; i < size(); ++i) {
         if (!storage[i].has_value()) {
@@ -392,6 +430,7 @@ std::vector<size_t> Series<T>::outlier_indices() {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 std::vector<T> Series<T>::outliers() {
     auto           indices = outlier_indices();
     std::vector<T> res(indices.size());
@@ -402,7 +441,8 @@ std::vector<T> Series<T>::outliers() {
 }
 
 template <typename T>
-void Series<T>::identify_na(const T& na) {
+    requires std::is_trivially_copyable_v<T>
+void Series<T>::identify_na(T na) {
     for (std::optional<T>& x : storage) {
         if (x.has_value() && x.value() == na) {
             x = {};
@@ -412,7 +452,8 @@ void Series<T>::identify_na(const T& na) {
 }
 
 template <typename T>
-void Series<T>::fill_na(const T& fill) {
+    requires std::is_trivially_copyable_v<T>
+void Series<T>::fill_na(T fill) {
     for (std::optional<T>& x : storage) {
         if (!x.has_value()) {
             x = fill;
@@ -431,6 +472,7 @@ std::ostream& operator<<(std::ostream& os, const Series<T2>& series) {
             os << std::string("`None`") << (i + 1 == series.size() ? "" : ", ");
         }
     }
+    os << std::endl << "Capacity: " << series.storage.capacity();
     os << std::endl << std::string("Sorted: ");
     for (size_t i = 0; i < series.sorted.size(); ++i) {
         os << series.sorted[i] << (i + 1 == series.size() ? "" : ", ");
@@ -440,6 +482,7 @@ std::ostream& operator<<(std::ostream& os, const Series<T2>& series) {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 void Series<T>::sort() {
     if (needs_update) {
         sorted = filter();
@@ -449,6 +492,7 @@ void Series<T>::sort() {
 }
 
 template <typename T>
+    requires std::is_trivially_copyable_v<T>
 std::vector<T> Series<T>::filter() {
     std::vector<T> res(count());
     size_t         j = 0;

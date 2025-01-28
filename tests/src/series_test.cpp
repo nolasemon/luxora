@@ -1,3 +1,4 @@
+#include "luxora/fixed_string.h"
 #include <functional>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -80,22 +81,23 @@ TEST(TestSeries, TestConvert) {
     Series<float> series_float = series_int.cast<float>();
     ASSERT_EQ(series_float.mean(), 40.f);
 
-    Series<std::string> series_string = series_int.map<std::string>(int2string);
-    Series<int>         series2       = series_string.map<int>(string2int);
+    Series<String> series_string = series_int.map<String>(int2string);
+    Series<int>    series2       = series_string.map<int>(string2int);
     ASSERT_EQ(series_int, series2);
 }
 
 TEST(TestSeries, TestMap) {
     Series<int> series_int({18, 30, 92, {}, 20});
 
-    Series<float> series_float = series_int.map<float>([](const int& x) { return float(x) / 3; });
+    Series<float> series_float = series_int.map<float>([](int x) { return float(x) / 3; });
     ASSERT_EQ(series_float, Series<float>({6.f, 10.f, 30.f + 2.f / 3, {}, 6 + 2.f / 3}));
 
-    Series<std::string> concat = series_int.map<std::string>([](const int& x) { return std::to_string(x) + "be"; });
-    ASSERT_EQ(concat, Series<std::string>({"18be", "30be", "92be", {}, "20be"}));
+    Series<MiniString> concat =
+        series_int.map<String>([](int x) { return String(std::to_string(x) + "be"); }).cast<MiniString>();
+    ASSERT_EQ(concat, Series<MiniString>({"18be", "30be", "92be", {}, "20be"}));
 
-    concat.map_inplace([](const std::string& s) { return s + std::string("ans"); });
-    ASSERT_EQ(concat, Series<std::string>({"18beans", "30beans", "92beans", {}, "20beans"}));
+    concat.map_inplace([](MiniString s) { return MiniString(s.to_string() + "ans"); });
+    ASSERT_EQ(concat, Series<MiniString>({"18beans", "30beans", "92beans", {}, "20beans"}));
 
     // TODO safe invocation
     // Series<float> erroneous = series_int.map<int>([](const int& x) { return 10 / (x - 30); });
