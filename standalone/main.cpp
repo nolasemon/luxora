@@ -71,6 +71,15 @@ int main(int argc, char** argv) {
         }
         try {
             app.parse(line);
+        } catch (const CLI::CallForHelp& e) {
+            app.exit(e);
+            continue;
+        } catch (const CLI::CallForAllHelp& e) {
+            app.exit(e);
+            continue;
+        } catch (const CLI::CallForVersion& e) {
+            app.exit(e);
+            continue;
         } catch (const CLI::ParseError& e) {
             std::cerr << "An error has occured: \n" << e.what() << std::endl;
             continue;
