@@ -102,6 +102,15 @@ class DataFrame {
 
     void fill_na(std::string column_name, Strategy strategy = Strategy::Mean);
 
+    template <typename T>
+    Series<T>& column_at(size_t index) {
+        return *get_column<T>(index);
+    }
+    template <typename T>
+    Series<T>& column_at(std::string column) {
+        return *get_column<T>(column);
+    }
+
     template <class T>
     std::vector<T> outliers(std::string column_name);
     template <class T>

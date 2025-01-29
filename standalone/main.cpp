@@ -58,9 +58,81 @@ int main(int argc, char** argv) {
     bool      show_rows = false;
     outliers->add_flag("--rows", show_rows, "Show table rows instead of values");
 
-    app.require_subcommand(1, 1);
-
     DataFrame df;
+
+    std::unordered_map<std::string, CLI::App*> action_apps;
+
+    std::unordered_map<std::string, std::pair<std::string, std::function<void()>>> actions = {
+        {"print", {"Print current frame", [&df]() { std::cout << df; }}},
+        {
+            "sum",
+            {
+                "Sum of selected column",
+                [&df, &column_from_name]() { std::cout << df.column_at<float>(column_from_name).sum() << std::endl; },
+            },
+        },
+        {
+            "mean",
+            {
+                "Mean of selected column",
+                [&df, &column_from_name]() { std::cout << df.column_at<float>(column_from_name).mean() << std::endl; },
+            },
+        },
+        {
+            "median",
+            {
+                "Median of selected column",
+                [&df, &column_from_name]() {
+                    std::cout << df.column_at<float>(column_from_name).median() << std::endl;
+                },
+            },
+        },
+        {
+            "min",
+            {
+                "Min of selected column",
+                [&df, &column_from_name]() { std::cout << df.column_at<float>(column_from_name).min() << std::endl; },
+            },
+        },
+        {
+            "max",
+            {
+                "Max of selected column",
+                [&df, &column_from_name]() { std::cout << df.column_at<float>(column_from_name).max() << std::endl; },
+            },
+        },
+        {
+            "range",
+            {
+                "Range of selected column",
+                [&df, &column_from_name]() { std::cout << df.column_at<float>(column_from_name).range() << std::endl; },
+            },
+        },
+        {
+            "var",
+            {
+                "Variance of selected column",
+                [&df, &column_from_name]() {
+                    std::cout << df.column_at<float>(column_from_name).variance() << std::endl;
+                },
+            },
+        },
+        {
+            "std",
+            {
+                "Standard deviation of selected column",
+                [&df, &column_from_name]() {
+                    std::cout << df.column_at<float>(column_from_name).stddev() << std::endl;
+                },
+            },
+        },
+    };
+
+    for (auto& [name, action] : actions) {
+        action_apps[name] = app.add_subcommand(name, action.first);
+    }
+
+    app.require_subcommand(1, 1);
 
     bool        loaded = false;
     std::string line;
@@ -111,6 +183,12 @@ int main(int argc, char** argv) {
             } else {
                 auto values = df.outliers<float>(column_from_name);
                 std::cout << values << std::endl;
+            }
+        }
+        for (auto ac_app : action_apps) {
+            if (ac_app.second->parsed()) {
+                df.convert_column<float>(column_from_name);
+                actions[ac_app.first].second();
             }
         }
     }
