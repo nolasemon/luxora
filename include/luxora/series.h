@@ -219,7 +219,7 @@ Series<T> Series<T>::from_vector(const std::vector<T>& vec) {
     for (size_t i = 0; i < vec.size(); ++i) {
         storage[i] = std::make_optional(vec[i]);
     }
-    return std::move(Series(storage));
+    return Series(storage);
 }
 
 template <typename T>

@@ -196,7 +196,6 @@ void DataFrame::convert_column_easy_conv(std::string column_name, std::string ne
 
 template <class T, class U>
 void DataFrame::convert_column_strictly_typed(std::string column_name, std::string new_name) {
-    size_t column_id = column_indices[column_name];
     if constexpr (std::is_same_v<T, U>) {
         return;
     } else if constexpr (std::is_convertible_v<T, U>) { // easy conversion

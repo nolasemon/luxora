@@ -20,10 +20,9 @@ std::ostream& operator<<(std::ostream& out, const std::vector<T>& v) {
     return out;
 }
 
-int main(int argc, char** argv) {
+int main() {
     CLI::App app{"CLI tool for data preparation."};
     app.set_help_all_flag("--help-all", "Expand all help");
-    argv = app.ensure_utf8(argv);
 
     CLI::App*   load = app.add_subcommand("load");
     std::string filename;
@@ -134,7 +133,6 @@ int main(int argc, char** argv) {
 
     app.require_subcommand(1, 1);
 
-    bool        loaded = false;
     std::string line;
     while (true) {
         std::cout << ">>> " << std::flush;

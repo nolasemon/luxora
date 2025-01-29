@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 23)
 set(CXX_STANDARD_REQUIRED on)
 set(CMAKE_BUILD_TYPE Debug)
 
+add_compile_options(-Wall -Wpedantic -Wextra)
+
 file(GLOB SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 add_subdirectory(external/rapidcsv)
