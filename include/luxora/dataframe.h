@@ -156,7 +156,12 @@ void DataFrame::convert_column_with_conv(std::function<U(const T&)> conv, std::s
         Series<U> new_series = series->template map<U>(conv);
         columns[column_id]   = std::make_unique<Series<U>>(new_series);
     } else {
-        size_t     new_column = add_column<U>(new_name);
+        size_t new_column;
+        if (column_indices.count(new_name)) {
+            new_column = column_indices[new_name];
+        } else {
+            new_column = add_column<U>(new_name);
+        }
         Series<U>* new_series = get_column<U>(new_column);
         *new_series           = series->template map<U>(conv);
     }
@@ -170,7 +175,12 @@ void DataFrame::convert_column_easy_conv(std::string column_name, std::string ne
         Series<U> new_series = series->template cast<U>();
         columns[column_id]   = std::make_unique<Series<U>>(new_series);
     } else {
-        size_t     new_column = add_column<U>(new_name);
+        size_t new_column;
+        if (column_indices.count(new_name)) {
+            new_column = column_indices[new_name];
+        } else {
+            new_column = add_column<U>(new_name);
+        }
         Series<U>* new_series = get_column<U>(new_column);
         *new_series           = series->template cast<U>();
     }
@@ -242,8 +252,13 @@ void DataFrame::normalize(std::string column_name, std::string new_name, NormMet
     if (new_name == "") {
         new_series = series;
     } else {
-        size_t new_column = add_column<T>(new_name);
-        new_series        = get_column<T>(new_column);
+        size_t new_column;
+        if (column_indices.count(new_name)) {
+            new_column = column_indices[new_name];
+        } else {
+            new_column = add_column<T>(new_name);
+        }
+        new_series = get_column<T>(new_column);
     }
     switch (method) {
     case MinMax:
