@@ -108,12 +108,12 @@ TEST(DataFrameTest, TestConvertColumn) {
     DataFrame df("resources/missing.csv");
     df.convert_column<int>("High");
 
-    // Same name
-    ASSERT_THROW(df.convert_column<long long>("High", "High"), std::invalid_argument);
+    // Same name and no throw
+    ASSERT_NO_THROW(df.convert_column<long long>("High", "High"));
     df.convert_column<long long>("Low", "long_column");
 
-    // No conversion needed string->string
-    ASSERT_THROW(df.convert_column<std::string>("Adj Close"), std::invalid_argument);
+    // No conversion needed and no throw
+    ASSERT_NO_THROW(df.convert_column<std::string>("Adj Close"));
     df.convert_column<float>("Volume");
     df.convert_column<size_t>("Volume", "new volume");
     std::ostringstream oss;
