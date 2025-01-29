@@ -4,7 +4,9 @@
 #include <luxora/luxora.h>
 #include <map>
 #include <optional>
+#include <ostream>
 #include <stdexcept>
+#include <string>
 
 using namespace Luxora;
 
@@ -23,17 +25,23 @@ int main(int argc, char** argv) {
     app.set_help_all_flag("--help-all", "Expand all help");
     argv = app.ensure_utf8(argv);
 
+    CLI::App*   load = app.add_subcommand("load");
     std::string filename;
-    app.add_option("-f,--file", filename, "File with data")->required();
+    load->add_option("filename", filename, "File with data")->required()->check(CLI::ExistingFile);
 
+    CLI::App*   save   = app.add_subcommand("save");
     std::string output = "output.csv";
-    app.add_option("-o,--out", output, "File to save data")->default_val(output);
+    save->add_option("output", output, "File to save data")->default_val(output);
 
-    std::string column_name;
-    app.add_option("--column-name", column_name, "Name of a column to work with")->required();
+    CLI::App* exit = app.add_subcommand("exit");
 
-    std::string new_column = "";
-    app.add_option("--new-column", new_column, "Name of a column to store result")->default_val("");
+    CLI::App*   column_from = app.add_subcommand("from");
+    std::string column_from_name;
+    column_from->add_option("from", column_from_name, "Name of a column to work with")->required();
+
+    CLI::App*   column_to      = app.add_subcommand("to");
+    std::string column_to_name = "";
+    column_to->add_option("to", column_to_name, "Name of a column to store result")->default_val("");
 
     CLI::App* impute = app.add_subcommand("impute", "Imputes missing data inplace.");
     Strategy  strategy;
@@ -52,35 +60,50 @@ int main(int argc, char** argv) {
 
     app.require_subcommand(1, 1);
 
-    CLI11_PARSE(app, argc, argv);
+    DataFrame df;
 
-    DataFrame df(filename);
+    bool        loaded = false;
+    std::string line;
+    while (true) {
+        std::cout << ">>> " << std::flush;
+        if (!std::getline(std::cin, line)) {
+            break;
+        }
+        try {
+            app.parse(line);
+        } catch (const CLI::ParseError& e) {
+            std::cerr << "An error has occured: \n" << e.what() << std::endl;
+            continue;
+        }
 
-    if (impute->parsed()) {
-        df.convert_column<float>(column_name);
-        df.fill_na(column_name, strategy);
-        df.save(output);
-    } else if (normalize->parsed()) {
-        df.convert_column<float>(column_name);
-        if (zscore) {
-            df.normalize<float>(column_name, new_column, Luxora::Zscore);
-        } else {
-            df.normalize<float>(column_name, new_column);
+        if (load->parsed()) {
+            df.load(filename);
+        } else if (save->parsed()) {
+            df.save(output);
+        } else if (exit->parsed()) {
+            break;
+        } else if (impute->parsed()) {
+            df.convert_column<float>(column_from_name);
+            df.fill_na(column_from_name, strategy);
+        } else if (normalize->parsed()) {
+            df.convert_column<float>(column_from_name);
+            if (zscore) {
+                df.normalize<float>(column_from_name, column_to_name, Luxora::Zscore);
+            } else {
+                df.normalize<float>(column_from_name, column_to_name);
+            }
+        } else if (outliers->parsed()) {
+            df.convert_column<float>(column_from_name);
+            std::cout << "Outliers: ";
+            if (show_rows) {
+                auto indices = df.outlier_indices<float>(column_from_name);
+                std::cout << std::endl;
+                df.choose_rows(std::cout, indices);
+            } else {
+                auto values = df.outliers<float>(column_from_name);
+                std::cout << values << std::endl;
+            }
         }
-        df.save(output);
-    } else if (outliers->parsed()) {
-        df.convert_column<float>(column_name);
-        std::cout << "Outliers: ";
-        if (show_rows) {
-            auto indices = df.outlier_indices<float>(column_name);
-            std::cout << std::endl;
-            df.choose_rows(std::cout, indices);
-        } else {
-            auto values = df.outliers<float>(column_name);
-            std::cout << values << std::endl;
-        }
-    } else {
-        throw std::runtime_error("Unreachable");
     }
 
     return 0;
