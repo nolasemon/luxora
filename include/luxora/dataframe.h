@@ -180,7 +180,7 @@ template <class T, class U>
 void DataFrame::convert_column_strictly_typed(std::string column_name, std::string new_name) {
     size_t column_id = column_indices[column_name];
     if constexpr (std::is_same_v<T, U>) {
-        throw std::invalid_argument("No conversion neeeded");
+        return;
     } else if constexpr (std::is_convertible_v<T, U>) { // easy conversion
         convert_column_easy_conv<T, U>(column_name, new_name);
         return;
