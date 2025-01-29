@@ -39,7 +39,6 @@ class SeriesUntyped {
     virtual size_t           type_size() const = 0;
 
     virtual std::optional<std::string> operator[](size_t) const = 0;
-    friend bool                        operator==(const SeriesUntyped&, const SeriesUntyped&);
 };
 
 template <typename T>
@@ -101,6 +100,10 @@ class Series : public SeriesUntyped {
         } else {
             return std::to_string(storage[index].value());
         }
+    }
+
+    bool operator==(const Series<T>& other) const {
+        return storage == other.storage;
     }
 
     template <typename U>

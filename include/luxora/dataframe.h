@@ -108,7 +108,6 @@ class DataFrame {
     std::vector<size_t> outlier_indices(std::string column_name);
 
     friend std::ostream& operator<<(std::ostream& out, const DataFrame& df);
-    friend bool          operator==(const DataFrame& lhs, const DataFrame& rhs);
 
     template <class T>
     void normalize(std::string column_name, std::string new_name = "", NormMethod method = MinMax);

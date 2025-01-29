@@ -81,18 +81,6 @@ std::ostream& operator<<(std::ostream& out, const DataFrame& df) {
     return out;
 }
 
-bool operator==(const DataFrame& lhs, const DataFrame& rhs) {
-    if (lhs.column_names != rhs.column_names || lhs.shape != rhs.shape) {
-        return false;
-    }
-    for (size_t j = 0; j < lhs.shape.second; ++j) {
-        if (*(lhs.columns[j]) != *(rhs.columns[j])) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void DataFrame::fill_na(std::string column_name, Strategy strategy) {
     size_t          column_id = column_indices[column_name];
     std::type_index ti        = columns[column_id]->type();

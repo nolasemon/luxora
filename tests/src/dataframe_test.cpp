@@ -86,7 +86,11 @@ TEST(DataFrameTest, SaveTest) {
 
     DataFrame df2;
     df2.load(iss);
-    ASSERT_EQ(df, df2);
+
+    std::ostringstream oss1, oss2;
+    oss1 << df;
+    oss2 << df2;
+    ASSERT_EQ(oss1.str(), oss2.str());
 }
 
 TEST(DataFrameTest, AddColumnTest) {
