@@ -152,7 +152,7 @@ void DataFrame::convert_column_with_conv(std::function<U(const T&)> conv, std::s
                                          std::string new_name) {
     size_t     column_id = column_indices[column_name];
     Series<T>* series    = get_column<T>(column_id);
-    if (new_name == "") {
+    if (new_name == "" || column_name == new_name) {
         Series<U> new_series = series->template map<U>(conv);
         columns[column_id]   = std::make_unique<Series<U>>(new_series);
     } else {
@@ -171,7 +171,7 @@ template <class T, class U>
 void DataFrame::convert_column_easy_conv(std::string column_name, std::string new_name) {
     size_t     column_id = column_indices[column_name];
     Series<T>* series    = get_column<T>(column_id);
-    if (new_name == "") {
+    if (new_name == "" || column_name == new_name) {
         Series<U> new_series = series->template cast<U>();
         columns[column_id]   = std::make_unique<Series<U>>(new_series);
     } else {
