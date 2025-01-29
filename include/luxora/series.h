@@ -38,7 +38,7 @@ class SeriesUntyped {
     virtual std::type_index  type() const      = 0;
     virtual size_t           type_size() const = 0;
 
-    virtual std::optional<std::string> operator[](size_t) const = 0;
+    virtual std::optional<std::string> string_at(size_t) const = 0;
 };
 
 template <typename T>
@@ -91,7 +91,7 @@ class Series : public SeriesUntyped {
         return sizeof(T);
     }
 
-    std::optional<std::string> operator[](size_t index) const override {
+    std::optional<std::string> string_at(size_t index) const override {
         if (!storage[index].has_value()) {
             return {};
         }

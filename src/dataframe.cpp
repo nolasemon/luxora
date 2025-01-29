@@ -47,7 +47,7 @@ std::ostream& DataFrame::write(std::ostream& os, std::string none = "") const {
     }
     for (size_t i = 0; i < shape.first; ++i) {
         for (size_t j = 0; j < shape.second; ++j) {
-            std::optional<std::string> cell = (*columns[j])[i];
+            std::optional<std::string> cell = (*columns[j]).string_at(i);
             os << cell.value_or(none) << (j == shape.second - 1 ? '\n' : ',');
         }
     }
@@ -60,7 +60,7 @@ std::ostream& DataFrame::choose_rows(std::ostream& os, std::vector<size_t> indic
     }
     for (auto i : indices) {
         for (size_t j = 0; j < shape.second; ++j) {
-            std::optional<std::string> cell = (*columns[j])[i];
+            std::optional<std::string> cell = (*columns[j]).string_at(i);
             os << cell.value_or("`None`") << (j == shape.second - 1 ? '\n' : ',');
         }
     }
