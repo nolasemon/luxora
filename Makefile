@@ -12,15 +12,17 @@ default: build
 
 send:
 	git clone --recurse-submodules . luxora
+	cp -r site luxora/luxora
+	cd luxora; rm -rf .git external/**/tests external/**/docs external/**/doc; make build; make test; rm -rf build
 	zip -r luxora.zip luxora
 	rm -rf luxora
 
 build: FORCE
-	cmake -B build -S .
+	cmake -B ${BUILD} -S .
 	cmake --build ${BUILD} --target ${EXEC}
 
 run: build
-	./${BUILD}/${EXEC} $(filter-out $@,$(MAKECMDGOALS))
+	./${BUILD}/${EXEC}
 
 debug-test: FORCE
 	cmake -B ${BUILD} -S .
@@ -37,3 +39,8 @@ format:
 
 clean:
 	rm -rf ${BUILD}
+
+docs:
+	find build/ -name *.gcda | xargs gcov --stdout > build/coverage.gcov
+	doxide build
+	mkdocs build
