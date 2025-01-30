@@ -41,21 +41,30 @@ class SeriesUntyped {
     virtual std::optional<std::string> string_at(size_t) const = 0;
 };
 
+/// A Series of values of the same type.
+/// Supports EDA functions like:
+///
+/// - `quantile(float q)`
+/// - `stddev()`
+/// - `normalized_zscore()`
 template <typename T>
 class Series : public SeriesUntyped {
     using Element = std::optional<T>;
     using Storage = std::vector<Element>;
+    /// Storage for values of the Series.
     Storage storage;
 
+    /// Cache sorted non missing values.
     std::vector<T> sorted;
-    bool           needs_update = true;
+    /// When `sorted` needs update.
+    bool needs_update = true;
 
   public:
     Series(const Storage&);
     Series(const std::initializer_list<Element>&);
 
-    static Series from_vector(const std::vector<T>&);
-    Storage       get_vector() const;
+    static Series from_vector(const std::vector<T>&); ///<
+    Storage       get_vector() const;                 ///<
 
     template <typename U>
     Series(const Series<U>& other) {
@@ -106,6 +115,7 @@ class Series : public SeriesUntyped {
         return storage == other.storage;
     }
 
+    ///
     template <typename U>
     Series<U> map(std::function<U(const T&)> f) const {
         std::vector<std::optional<U>> converted(storage.size());
@@ -119,6 +129,7 @@ class Series : public SeriesUntyped {
         return Series<U>(converted);
     }
 
+    ///
     template <typename U>
     Series<U> map_option(std::function<std::optional<U>(const Element&)> f) const {
         std::vector<std::optional<U>> converted(storage.size());
@@ -128,6 +139,7 @@ class Series : public SeriesUntyped {
         return Series<U>(converted);
     }
 
+    ///
     Series<T> map(std::function<T(const T&)> f) const {
         std::vector<std::optional<T>> converted(storage.size());
         for (size_t i = 0; i < storage.size(); ++i) {
@@ -140,6 +152,7 @@ class Series : public SeriesUntyped {
         return Series<T>(converted);
     }
 
+    ///
     void map_inplace(std::function<T(const T&)> f) {
         for (size_t i = 0; i < storage.size(); ++i) {
             if (storage[i].has_value()) {
@@ -151,12 +164,14 @@ class Series : public SeriesUntyped {
         needs_update = true;
     }
 
+    ///
     void map_inplace_option(std::function<std::optional<T>(const std::optional<T>&)> f) const {
         for (size_t i = 0; i < storage.size(); ++i) {
             storage[i] = f(storage[i]);
         }
     }
 
+    /// Cast a Series to a convertible type.
     template <typename U>
     Series<U> cast() const {
         if constexpr (std::is_convertible_v<T, U>) {
@@ -174,29 +189,41 @@ class Series : public SeriesUntyped {
         }
     }
 
-    T sum() const;
-    T mean() const;
-    T median() const;
+    T sum() const;    ///<
+    T mean() const;   ///<
+    T median() const; ///<
 
-    T max() const;
-    T min() const;
-    T range() const;
+    T max() const;   ///<
+    T min() const;   ///<
+    T range() const; ///< Computes max() - min()
 
+    /// Computes value that is greater than q fraction of values. Sorts data in the process.
     T quantile(float q);
-    T iqr();
+    T iqr(); ///< A value of missing values, for example -1, "".
 
-    T variance() const;
-    T stddev() const;
+    T variance() const; ///<
+    T stddev() const;   ///<
 
+    /// Counts non missing values.
     size_t count() const;
 
-    Series<T> normalized_minmax() const;
-    Series<T> normalized_zscore() const;
+    Series<T> normalized_minmax() const; ///<
+    Series<T> normalized_zscore() const; ///<
 
-    std::vector<T>      outliers();
-    std::vector<size_t> outlier_indices();
+    std::vector<T>      outliers();        ///<
+    std::vector<size_t> outlier_indices(); ///<
 
+    /**
+     * Mark values that match na as missing.
+     *
+     * @param na A value of missing values, for example -1, "".
+     */
     void identify_na(const T& na);
+    /**
+     * Fill missing values with some constant.
+     *
+     * @param fill A constant to fill all missing values.
+     */
     void fill_na(const T& fill);
 
     template <typename T2>

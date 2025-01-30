@@ -40,7 +40,7 @@ format:
 clean:
 	rm -rf ${BUILD}
 
-docs:
-	find build/ -name *.gcda | xargs gcov --stdout > build/coverage.gcov
+docs: FORCE
+	find build/ -name "*.gcda" | xargs gcov --stdout > build/coverage.gcov
 	doxide build
 	mkdocs build

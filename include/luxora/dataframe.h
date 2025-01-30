@@ -45,35 +45,60 @@ struct PositionHash {
     }
 };
 
+/// Data imputation strategy.
 enum Strategy {
-    Mean,
-    Median,
+    Mean,   ///<
+    Median, ///<
 };
 
+/// Method of normalization.
 enum NormMethod {
-    MinMax,
-    Zscore,
+    MinMax, ///< Map linearly from values to [0, 1] so min is 0 and max is 1.
+    Zscore, ///< Set mean to 0 and stddev to 1.
 };
 
+/**
+ * Table of values.
+ *
+ * For the sake of "dynamic typization" unique_ptr<SeriesUntyped> is used.
+ */
 class DataFrame {
+    /// Stores series of different data types.
     std::vector<std::unique_ptr<SeriesUntyped>> columns;
-    std::unordered_map<std::string, size_t>     column_indices;
-    std::vector<std::string>                    column_names;
+    /// A mapping between column name and its index in columns.
+    std::unordered_map<std::string, size_t> column_indices;
+    /// Vector of column names.
+    std::vector<std::string> column_names;
 
   public:
+    /// Shape of the dataframe (height, width).
     std::pair<size_t, size_t> shape;
 
   public:
     DataFrame();
     DataFrame(std::string filename);
 
+    /// Load data frame from .csv file.
     void load(std::string filename);
+    ///
     void load(std::istream& is);
+    /// Save data frame to a new file.
     void save(std::string filename) const;
+    ///
     void save(std::ostream& os) const;
 
+    /**
+     * Choose rows to print.
+     *
+     * @param rows Sequence of row indices.
+     */
     std::ostream& choose_rows(std::ostream&, std::vector<size_t> rows) const;
 
+    /**
+     * Add a new column.
+     *
+     * @returns Index of the created column in columns.
+     */
     template <typename T>
     size_t add_column(std::string name);
 
@@ -100,24 +125,48 @@ class DataFrame {
                                         "` is not supported.");
     }
 
+    /// Impute missing values with a strategy.
     void fill_na(std::string column_name, Strategy strategy = Strategy::Mean);
 
+    ///
     template <typename T>
     Series<T>& column_at(size_t index) {
         return *get_column<T>(index);
     }
+    /// Address a column by name.
     template <typename T>
     Series<T>& column_at(std::string column) {
         return *get_column<T>(column);
     }
 
+    /**
+     * Find outliers in the column.
+     *
+     * @param column_name A column to find outliers
+     *
+     * @returns Vector of outliers.
+     */
     template <class T>
     std::vector<T> outliers(std::string column_name);
+    /**
+     * Find rows in which the column has outliers.
+     *
+     * @param column_name A column to find outliers
+     *
+     * @returns Indices of rows with outliers.
+     */
     template <class T>
     std::vector<size_t> outlier_indices(std::string column_name);
 
     friend std::ostream& operator<<(std::ostream& out, const DataFrame& df);
 
+    /**
+     * Normalize series with a method.
+     *
+     * @param column_name A column to normalize.
+     * @param new_name A column to store the result.
+     * @param method Method of normalization. (MinMax or Zscore).
+     */
     template <class T>
     void normalize(std::string column_name, std::string new_name = "", NormMethod method = MinMax);
 

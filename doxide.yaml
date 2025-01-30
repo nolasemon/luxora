@@ -1,0 +1,6 @@
+title: Luxora CLI
+description: CLI tool for data preparation.
+files:
+  - "include/luxora/*.h"
+  - "src/*.cpp"
+coverage: build/coverage.gcov
