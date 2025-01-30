@@ -2,6 +2,8 @@
 
 CLI tool for data preparation.
 
+Documentation is built using Doxide and MkDocs.
+
 ### Features
 - [x] Loading and parsing CSV files  
 - [ ] Identification and processing of missing data   
@@ -12,26 +14,37 @@ CLI tool for data preparation.
     - Both Z-score and MinMax  
 - [x] Outlier detection using IQR  
 - [x] Export cleaned data to a new file
-- [ ] Data info  
+- [x] Data info  
 - [ ] Time data type  
 - [ ] Arbitrary Index column  
-- [ ] Interactive  
+- [x] Interactive  
 
 ### Development
 - `make build` for build
-- `make run -- ...` for running with args
+- `make run` for running interactive
 - `make debug-test` for compiling debuggable executable of a single test
 - `make test` for general testing
 - Executable along with lib will be inside `build` directory
 
 ### Usage examples
-- `./build/luxora-cli --file resources/timeseries.csv --column-name Value outliers --rows`  
+- <pre>
+  ./build/luxora-cli
+  >>> load resources/timeseries.csv
+  >>> from Value
+  >>> outliers --rows
+  </pre>
   <pre>Outliers:  
   Index,Value,Category,Timestamp  
   4,5000.000000,A,2024-01-01 15:00:00  
   9,3000.000000,B,2024-01-01 20:0:00  
   15,-100.000000,C,2024-01-02 02:00:00</pre>
-- `./build/luxora-cli --file resources/missing.csv --column-name Volume --new-column VolumeNorm normalize`  
+- <pre>
+  ./build/luxora-cli
+  >>> load resources/missing.csv
+  >>> from Volume
+  >>> to VolumeNorm
+  >>> normalize
+  </pre>
   <label>output.csv:</label>
   <pre>
   Open,High,Low,Close,Volume,Adj Close,VolumeNorm
