@@ -44,6 +44,7 @@ Documentation is built using Doxide and MkDocs.
   >>> from Volume
   >>> to VolumeNorm
   >>> normalize
+  >>> save
   </pre>
   <label>output.csv:</label>
   <pre>
